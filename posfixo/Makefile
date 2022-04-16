@@ -1,5 +1,5 @@
 posfixo: posfixo.tab.c lex.yy.c posfixo.o 
-	gcc lex.yy.c posfixo.tab.c -o posfixo -ll -ly -lc
+	gcc lex.yy.c posfixo.tab.c -o posfixo -ll -lc
 
 posfixo.tab.c: posfixo.y 
 	bison posfixo.y -d -v

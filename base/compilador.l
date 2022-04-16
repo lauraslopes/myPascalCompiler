@@ -113,7 +113,6 @@ end { simbolo = simb_end;
           return FECHA_PARENTESES;
  }
 
-/* LAURA SILVA LOPES */
 \[  { simbolo = simb_abre_colchetes;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" abre_colchetes ");
@@ -220,6 +219,42 @@ not { simbolo = simb_not;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" not ");
           return NOT;
+ }
+
+div { simbolo = simb_div;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" div ");
+          return DIV;
+ }
+
+array { simbolo = simb_array;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" array ");
+          return ARRAY;
+ }
+
+\+ { simbolo = simb_mais;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" mais ");
+          return MAIS;
+ }
+
+\- { simbolo = simb_menos;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" menos ");
+          return MENOS;
+ }
+
+\* { simbolo = simb_asterisco;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" asterisco ");
+          return ASTERISCO;
+ }
+
+\/ { simbolo = simb_barra;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" barra ");
+          return BARRA;
  }
 
 {ident} { simbolo = simb_identificador;

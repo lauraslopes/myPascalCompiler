@@ -10,7 +10,10 @@
 \-    { return MENOS; }
 \*    { return ASTERISCO;  }
 \/    { return DIV;  }
-a     { return IDENT;   }
+and     { return AND;   }
+or     { return OR;   }
+a     { return IDENTA;   }
+b     { return IDENTB;   }
 
 %%
 
