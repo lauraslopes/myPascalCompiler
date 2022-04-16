@@ -17,6 +17,11 @@ int num_vars;
 %token PROGRAM ABRE_PARENTESES FECHA_PARENTESES
 %token VIRGULA PONTO_E_VIRGULA DOIS_PONTOS PONTO
 %token T_BEGIN T_END VAR IDENT ATRIBUICAO
+%token ABRE_COLCHETES FECHA_COLCHETES ABRE_CHAVES FECHA_CHAVES
+%token LABEL TYPE OF GOTO ARRAY
+%token PROCEDURE FUNCTION
+%token IF THEN ELSE WHILE DO
+%token OR AND NOT DIV MAIS MENOS ASTERISCO BARRA
 
 %%
 
@@ -81,6 +86,11 @@ comandos:
 
 
 %%
+
+void yyerror(const char *s) {
+   fprintf(stderr, "%s\n", s);
+   return;
+}
 
 int main (int argc, char** argv) {
    FILE* fp;
