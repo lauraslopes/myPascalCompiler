@@ -1,6 +1,30 @@
 Terminals unused in grammar
 
     ATRIBUICAO
+    ABRE_COLCHETES
+    FECHA_COLCHETES
+    ABRE_CHAVES
+    FECHA_CHAVES
+    LABEL
+    TYPE
+    OF
+    GOTO
+    ARRAY
+    PROCEDURE
+    FUNCTION
+    IF
+    THEN
+    ELSE
+    WHILE
+    DO
+    OR
+    AND
+    NOT
+    DIV
+    MAIS
+    MENOS
+    ASTERISCO
+    BARRA
 
 
 Grammar
@@ -60,58 +84,82 @@ Terminals, with rules where they appear
     VAR (267) 7
     IDENT (268) 2 14 15 16 17 18
     ATRIBUICAO (269)
+    ABRE_COLCHETES (270)
+    FECHA_COLCHETES (271)
+    ABRE_CHAVES (272)
+    FECHA_CHAVES (273)
+    LABEL (274)
+    TYPE (275)
+    OF (276)
+    GOTO (277)
+    ARRAY (278)
+    PROCEDURE (279)
+    FUNCTION (280)
+    IF (281)
+    THEN (282)
+    ELSE (283)
+    WHILE (284)
+    DO (285)
+    OR (286)
+    AND (287)
+    NOT (288)
+    DIV (289)
+    MAIS (290)
+    MENOS (291)
+    ASTERISCO (292)
+    BARRA (293)
 
 
 Nonterminals, with rules where they appear
 
-    $accept (15)
+    $accept (39)
         on left: 0
-    programa (16)
+    programa (40)
         on left: 2
         on right: 0
-    $@1 (17)
+    $@1 (41)
         on left: 1
         on right: 2
-    bloco (18)
+    bloco (42)
         on left: 4
         on right: 2
-    $@2 (19)
+    $@2 (43)
         on left: 3
         on right: 4
-    parte_declara_vars (20)
+    parte_declara_vars (44)
         on left: 5
         on right: 4
-    var (21)
+    var (45)
         on left: 7 8
         on right: 5
-    $@3 (22)
+    $@3 (46)
         on left: 6
         on right: 7
-    declara_vars (23)
+    declara_vars (47)
         on left: 9 10
         on right: 7 9
-    declara_var (24)
+    declara_var (48)
         on left: 13
         on right: 9 10
-    $@4 (25)
+    $@4 (49)
         on left: 11
         on right: 13
-    $@5 (26)
+    $@5 (50)
         on left: 12
         on right: 13
-    tipo (27)
+    tipo (51)
         on left: 14
         on right: 13
-    lista_id_var (28)
+    lista_id_var (52)
         on left: 15 16
         on right: 13 15
-    lista_idents (29)
+    lista_idents (53)
         on left: 17 18
         on right: 2 17
-    comando_composto (30)
+    comando_composto (54)
         on left: 19
         on right: 4
-    comandos (31)
+    comandos (55)
         on left: 20
         on right: 19
 
