@@ -113,6 +113,115 @@ end { simbolo = simb_end;
           return FECHA_PARENTESES;
  }
 
+/* LAURA SILVA LOPES */
+\[  { simbolo = simb_abre_colchetes;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" abre_colchetes ");
+          return ABRE_COLCHETES;
+ }
+
+\]  { simbolo = simb_fecha_colchetes;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" fecha_colchetes ");
+          return FECHA_COLCHETES;
+ } 
+
+\{  { simbolo = simb_abre_chaves;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" abre_chaves ");
+          return ABRE_CHAVES;
+ }
+
+\}  { simbolo = simb_fecha_chaves;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" fecha_chaves ");
+          return FECHA_CHAVES;
+ } 
+
+label { simbolo = simb_label;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" label ");
+          return LABEL;
+ }
+
+type { simbolo = simb_type;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" type ");
+          return TYPE;
+ }
+
+of { simbolo = simb_of;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" of ");
+          return OF;
+ }
+
+procedure { simbolo = simb_procedure;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" procedure ");
+          return PROCEDURE;
+ }
+
+function { simbolo = simb_function;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" function ");
+          return FUNCTION;
+ }
+
+goto { simbolo = simb_goto;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" goto ");
+          return GOTO;
+ }
+
+if { simbolo = simb_if;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" if ");
+          return IF;
+ }
+
+then { simbolo = simb_then;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" then ");
+          return THEN;
+ }
+
+else { simbolo = simb_else;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" else ");
+          return ELSE;
+ }
+
+while { simbolo = simb_while;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" while ");
+          return WHILE;
+ }
+
+do { simbolo = simb_do;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" do ");
+          return DO;
+ }
+
+or { simbolo = simb_or;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" or ");
+          return OR;
+ }
+
+and { simbolo = simb_and;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" and ");
+          return AND;
+ }
+
+not { simbolo = simb_not;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" not ");
+          return NOT;
+ }
+
 {ident} { simbolo = simb_identificador;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" ident  ");
