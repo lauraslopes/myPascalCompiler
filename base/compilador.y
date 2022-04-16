@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "compilador.h"
+#include "tabSimbolos.h"
 
 int num_vars;
 
@@ -70,8 +71,8 @@ tipo        : IDENT
 ;
 
 lista_id_var: lista_id_var VIRGULA IDENT
-              { /* insere �ltima vars na tabela de s�mbolos */ }
-            | IDENT { /* insere vars na tabela de s�mbolos */}
+              {insere(token, var_simples); /* insere �ltima vars na tabela de s�mbolos */ }
+            | IDENT { insere(token, var_simples); /* insere vars na tabela de s�mbolos */}
 ;
 
 lista_idents: lista_idents VIRGULA IDENT
@@ -114,6 +115,7 @@ int main (int argc, char** argv) {
 
    yyin=fp;
    yyparse();
+   printTabSimbolo();
 
    return 0;
 }
