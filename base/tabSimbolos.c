@@ -6,6 +6,7 @@ int desloc;
 
 void printSimbolo(Simbolo* simbolo) {
 	printf("%s ", simbolo->identificador);
+	printf("%d ", simbolo->tipo);
 	printf("%d ", simbolo->nivel);
 	printf("%d\n", simbolo->deslocamento);
 }
@@ -39,13 +40,14 @@ Simbolo* busca(char* identificador) {
 
 	Simbolo* atual = topo;
 	while (atual != NULL) {
-		if (strcmp(atual->identificador, identificador)) {
+		if (strcmp(atual->identificador, identificador) == 0) {
 			return atual;
 		}
 
 		atual = atual->anterior;
 	}
 
+	imprimeErro("Variável não declarada.");
 	return NULL;
 }
 
@@ -59,10 +61,15 @@ void retira(int n) {
 	}
 }
 
-void atualizaTipo(Tipo tipo) {
+void atualizaTipo(char* tipoStr) {
+
+	if (strcmp(tipoStr, "integer") != 0) {
+		imprimeErro("Tipo inválido");
+	}
+
 	Simbolo* aux = topo;
 	while ((aux != NULL) && (aux->tipo == vazio)) {
-		aux->tipo = tipo;
+		aux->tipo = integer;
 		aux = aux->anterior;
 	}
 }

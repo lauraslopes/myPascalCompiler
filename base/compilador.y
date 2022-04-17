@@ -8,10 +8,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "compilador.h"
 #include "tabSimbolos.h"
 
 int num_vars;
+char l_elem[MAX_IDENT];
+char str[MAX_IDENT];
 
 %}
 
@@ -22,7 +23,7 @@ int num_vars;
 %token LABEL TYPE OF GOTO ARRAY
 %token PROCEDURE FUNCTION
 %token IF THEN ELSE WHILE DO
-%token OR AND NOT DIV MAIS MENOS ASTERISCO BARRA
+%token OR AND NOT DIV MAIS MENOS ASTERISCO BARRA NUMERO
 
 %%
 
@@ -39,6 +40,7 @@ programa    :{
 bloco       :
               parte_declara_vars
               {
+              num_vars = 0;
               }
 
               comando_composto
@@ -62,17 +64,22 @@ declara_vars: declara_vars declara_var
 declara_var : { }
               lista_id_var DOIS_PONTOS
               tipo
-              { /* AMEM */
+              { 
+              sprintf(str, "AMEM %d", num_vars);
+
+              geraCodigo (NULL, str); /* AMEM */
+
+              num_vars = 0;
               }
               PONTO_E_VIRGULA
 ;
 
-tipo        : IDENT
+tipo        : IDENT {atualizaTipo(token);}
 ;
 
 lista_id_var: lista_id_var VIRGULA IDENT
-              {insere(token, var_simples); /* insere �ltima vars na tabela de s�mbolos */ }
-            | IDENT { insere(token, var_simples); /* insere vars na tabela de s�mbolos */}
+              {insere(token, var_simples); num_vars++;/* insere �ltima vars na tabela de s�mbolos */ }
+            | IDENT { insere(token, var_simples); num_vars++; /* insere vars na tabela de s�mbolos */}
 ;
 
 lista_idents: lista_idents VIRGULA IDENT
@@ -82,9 +89,46 @@ lista_idents: lista_idents VIRGULA IDENT
 
 comando_composto: T_BEGIN comandos T_END
 
-comandos:
+comandos: comandos comando | 
+          comando
 ;
 
+comando     : atribuicao
+;
+
+atribuicao  : IDENT {strncpy(l_elem, token, TAM_TOKEN);} ATRIBUICAO expr PONTO_E_VIRGULA 
+              {
+              Simbolo* simbolo = busca(l_elem);
+              sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
+
+              geraCodigo(NULL, str);
+
+              }
+;
+
+expr       : expr MAIS termo |
+             expr MENOS termo |
+             termo
+;
+
+termo      : termo ASTERISCO fator |
+             termo DIV fator |
+             fator
+;
+
+fator      : IDENT 
+            {
+            Simbolo* simbolo = busca(token);
+            sprintf(str, "CRVL %d,%d", nivel_lexico, simbolo->deslocamento);
+
+            geraCodigo(NULL, str);
+            } | 
+            NUMERO
+            {
+            sprintf(str, "CRCT %s", token);
+            geraCodigo(NULL, str);
+            } 
+;
 
 %%
 

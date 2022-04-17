@@ -12,6 +12,7 @@
  * ------------------------------------------------------------------- */
 
 #define TAM_TOKEN 16
+#define MAX_IDENT 100
 
 typedef enum simbolos {
   simb_program, simb_var, simb_begin, simb_end,
@@ -45,3 +46,4 @@ extern int nl;
 void geraCodigo (char*, char*);
 int yylex();
 void yyerror(const char *s);
+int imprimeErro ( char* erro );

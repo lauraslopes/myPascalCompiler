@@ -4,8 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#define MAX_IDENT 100
+#include "compilador.h"
 
 typedef enum Categoria {
   var_simples, param_formal, procedimento
@@ -31,6 +30,6 @@ extern int nivel_lexico;
 void insere(char* identificador, Categoria categoria);
 Simbolo* busca(char* identificador);
 void retira(int n);
-void atualizaTipo(Tipo tipo);
+void atualizaTipo(char* tipoStr);
 
 #endif
