@@ -40,6 +40,12 @@ void geraCodigo (char* rot, char* comando) {
   }
 }
 
+void comparaTipos(int tipoEsq, int tipoDir) {
+  if (tipoEsq != tipoDir) {
+    imprimeErro("Expressão entre variáveis de tipos diferentes");
+  }
+}
+
 int imprimeErro ( char* erro ) {
   fprintf (stderr, "Erro na linha %d - %s\n", nl, erro);
   exit(-1);

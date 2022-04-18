@@ -9,10 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tabSimbolos.h"
+#include "pilha.h"
 
 int num_vars;
 char l_elem[MAX_IDENT];
 char str[MAX_IDENT];
+Pilha* pilhaTipos;
 
 %}
 
@@ -20,10 +22,11 @@ char str[MAX_IDENT];
 %token VIRGULA PONTO_E_VIRGULA DOIS_PONTOS PONTO
 %token T_BEGIN T_END VAR IDENT ATRIBUICAO
 %token ABRE_COLCHETES FECHA_COLCHETES ABRE_CHAVES FECHA_CHAVES
-%token LABEL TYPE OF GOTO ARRAY
+%token LABEL TYPE OF GOTO ARRAY RELACAO
 %token PROCEDURE FUNCTION
 %token IF THEN ELSE WHILE DO
 %token OR AND NOT DIV MAIS MENOS ASTERISCO BARRA NUMERO
+%token IGUAL DIFF MENOR MENOR_IGUAL MAIOR MAIOR_IGUAL
 
 %%
 
@@ -101,18 +104,58 @@ atribuicao  : IDENT {strncpy(l_elem, token, TAM_TOKEN);} ATRIBUICAO expr PONTO_E
               Simbolo* simbolo = busca(l_elem);
               sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
 
+              int t1 = devolveValor(pilhaTipos);
+              pilhaTipos = desempilha(pilhaTipos);
+              comparaTipos(t1, simbolo->tipo);
+
               geraCodigo(NULL, str);
 
               }
 ;
 
-expr       : expr MAIS termo |
-             expr MENOS termo |
+expr       : expr MAIS termo {
+             int t1 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             int t2 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             comparaTipos(t1, t2);
+             pilhaTipos = empilha(pilhaTipos, t1);
+             } |
+             expr MENOS termo {
+             int t1 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             int t2 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             comparaTipos(t1, t2);
+             pilhaTipos = empilha(pilhaTipos, t1);
+             } |
+             expr relacao {
+             int t1 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             int t2 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             comparaTipos(t1, t2);
+             pilhaTipos = empilha(pilhaTipos, boolean);
+             } |
              termo
 ;
 
-termo      : termo ASTERISCO fator |
-             termo DIV fator |
+termo      : termo ASTERISCO fator {
+             int t1 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             int t2 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             comparaTipos(t1, t2);
+             pilhaTipos = empilha(pilhaTipos, t1);
+             } |
+             termo DIV fator {
+             int t1 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             int t2 = devolveValor(pilhaTipos);
+             pilhaTipos = desempilha(pilhaTipos);
+             comparaTipos(t1, t2);
+             pilhaTipos = empilha(pilhaTipos, t1);
+             } |
              fator
 ;
 
@@ -120,15 +163,32 @@ fator      : IDENT
             {
             Simbolo* simbolo = busca(token);
             sprintf(str, "CRVL %d,%d", nivel_lexico, simbolo->deslocamento);
-
+            pilhaTipos = empilha(pilhaTipos, simbolo->tipo);
             geraCodigo(NULL, str);
             } | 
             NUMERO
             {
             sprintf(str, "CRCT %s", token);
             geraCodigo(NULL, str);
-            } 
+            pilhaTipos = empilha(pilhaTipos, integer);
+
+            } |
+            ABRE_PARENTESES expr FECHA_PARENTESES
 ;
+
+relacao    :
+   IGUAL expr
+    {geraCodigo(NULL, "CMIG");}
+    | DIFF expr
+    {geraCodigo(NULL, "CMDG");}
+    | MENOR expr
+    {geraCodigo(NULL, "CMME");}
+    | MENOR_IGUAL expr
+    {geraCodigo(NULL, "CMEG");}
+    | MAIOR expr
+    {geraCodigo(NULL, "CMMA");}
+    | MAIOR_IGUAL expr
+    {geraCodigo(NULL, "CMAG");}
 
 %%
 

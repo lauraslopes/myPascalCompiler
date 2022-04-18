@@ -257,6 +257,42 @@ array { simbolo = simb_array;
           return BARRA;
  }
 
+\= { simbolo = simb_igual;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" igual ");
+          return IGUAL;
+ }
+
+\<\> { simbolo = simb_diff;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" diff ");
+          return DIFF;
+ }
+
+\< { simbolo = simb_menor;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" menor ");
+          return MENOR;
+ }
+
+\<\= { simbolo = simb_menor_igual;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" menor_igual ");
+          return MENOR_IGUAL;
+ }
+
+\>\= { simbolo = simb_maior_igual;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" maior_igual ");
+          return MAIOR_IGUAL;
+ }
+
+\> { simbolo = simb_maior;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" maior ");
+          return MAIOR;
+ }
+
 {ident} { simbolo = simb_identificador;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" ident  ");

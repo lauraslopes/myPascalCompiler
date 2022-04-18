@@ -11,6 +11,7 @@ typedef enum Categoria {
 } Categoria;
 
 typedef enum Tipo {
+  boolean,
   integer,
   vazio
 } Tipo;

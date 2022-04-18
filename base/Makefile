@@ -9,13 +9,13 @@
 
 $DEPURA=1
 
-compilador: lex.yy.c compilador.tab.c compilador.o compilador.h tabSimbolos.o tabSimbolos.h 
-	gcc lex.yy.c compilador.tab.c compilador.o tabSimbolos.o -o compilador -ll -lc
+compilador: lex.yy.c compilador.tab.c compilador.o compilador.h tabSimbolos.o tabSimbolos.h pilha.o pilha.h
+	gcc lex.yy.c compilador.tab.c compilador.o tabSimbolos.o pilha.o -o compilador -ll -lc
 
 lex.yy.c: compilador.l compilador.h
 	flex compilador.l
 
-compilador.tab.c: tabSimbolos.o tabSimbolos.h compilador.y compilador.h
+compilador.tab.c: tabSimbolos.o tabSimbolos.h compilador.y compilador.h pilha.o pilha.h
 	bison compilador.y -d -v
 
 compilador.o : compilador.h compiladorF.c
@@ -23,6 +23,9 @@ compilador.o : compilador.h compiladorF.c
 
 tabSimbolos.o : tabSimbolos.h tabSimbolos.c
 	gcc -c tabSimbolos.c -o tabSimbolos.o
+
+pilha.o : pilha.h pilha.c
+	gcc -c pilha.c -o pilha.o
 
 clean :
 	rm -f compilador.tab.* lex.yy.c compilador.o compilador
