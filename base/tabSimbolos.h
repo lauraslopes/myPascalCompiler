@@ -33,5 +33,6 @@ void insere(char* identificador, Categoria categoria);
 Simbolo* busca(char* identificador);
 void retira(int n);
 void atualizaTipo(char* tipoStr);
+void printTabSimbolo();
 
 #endif

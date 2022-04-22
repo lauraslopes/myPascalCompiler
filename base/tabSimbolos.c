@@ -11,7 +11,7 @@ void printSimbolo(Simbolo* simbolo) {
 	printf("%d\n", simbolo->deslocamento);
 }
 
-void printTabSimbolo(Simbolo* simbolo) {
+void printTabSimbolo() {
 	Simbolo* atual = topo;
 	while (atual != NULL) {
 		printSimbolo(atual);

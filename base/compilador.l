@@ -233,6 +233,18 @@ array { simbolo = simb_array;
           return ARRAY;
  }
 
+read { simbolo = simb_read;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" read ");
+          return READ;
+ }
+
+write { simbolo = simb_write;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" write ");
+          return WRITE;
+ }
+
 \+ { simbolo = simb_mais;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" mais ");

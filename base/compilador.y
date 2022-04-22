@@ -14,6 +14,7 @@ int num_vars;
 char l_elem[MAX_IDENT];
 char str[MAX_IDENT];
 Pilha* pilhaTipos;
+Pilha* pilhaRotulos;
 int rotulo = 0;
 
 %}
@@ -23,7 +24,7 @@ int rotulo = 0;
 %token T_BEGIN T_END VAR IDENT ATRIBUICAO
 %token ABRE_COLCHETES FECHA_COLCHETES ABRE_CHAVES FECHA_CHAVES
 %token LABEL TYPE OF GOTO ARRAY RELACAO
-%token PROCEDURE FUNCTION
+%token PROCEDURE FUNCTION READ WRITE
 %token IF THEN ELSE WHILE DO
 %token OR AND NOT DIV MAIS MENOS ASTERISCO BARRA NUMERO
 %token IGUAL DIFF MENOR MENOR_IGUAL MAIOR MAIOR_IGUAL
@@ -105,6 +106,8 @@ comando_composto    :
 
 comandos    : 
     comandos comando | 
+    comandos comando PONTO_E_VIRGULA | 
+    comando PONTO_E_VIRGULA |
     comando
 ;
 
@@ -115,26 +118,73 @@ comando    :
 comando_sem_rotulo    :
     atribuicao |
     comando_composto |
-    comando_repetitivo
+    comando_repetitivo |
+    leitura |
+    escrita
 ;
+
+leitura    :
+    READ ABRE_PARENTESES leitura_identificadores FECHA_PARENTESES
+; 
+
+leitura_identificadores    :
+    leitura_identificadores VIRGULA IDENT
+    {
+        geraCodigo(NULL, "LEIT");
+        Simbolo* simbolo = busca(token);
+        sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
+        geraCodigo(NULL, str);
+    } |
+    IDENT 
+    {
+        geraCodigo(NULL, "LEIT");
+        Simbolo* simbolo = busca(token);
+        sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
+        geraCodigo(NULL, str);
+    }
+;
+
+escrita    :
+    WRITE ABRE_PARENTESES escrita_identificadores FECHA_PARENTESES
+; 
+
+escrita_identificadores    :
+    escrita_identificadores VIRGULA expr
+    {
+        geraCodigo(NULL, "IMPR");
+    } |
+    expr 
+    {
+        geraCodigo(NULL, "IMPR");
+    }
+;
+
 
 comando_repetitivo    : 
     WHILE 
     {
         sprintf(str, "R%d: NADA", rotulo);
-        rotulo++;
+
+        pilhaRotulos = empilha(pilhaRotulos, rotulo);
+        pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
+        rotulo+=2;
         geraCodigo(NULL, str);
     } 
     ABRE_PARENTESES expr FECHA_PARENTESES
     {
-        sprintf(str, "DSVF R%d", rotulo);
+        int r1 = devolveValor(pilhaRotulos);
+        sprintf(str, "DSVF R%d", r1);
         geraCodigo(NULL, str);
     } 
-    DO comando_composto 
+    DO comando_sem_rotulo 
     {
-        sprintf(str, "DSVS R%d", rotulo-1); 
+        int r1 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "DSVS R%d", r0); 
         geraCodigo(NULL, str);
-        sprintf(str, "R%d: NADA", rotulo); 
+        sprintf(str, "R%d: NADA", r1); 
         geraCodigo(NULL, str);
     }
 ;
@@ -161,10 +211,12 @@ expr    :
     expr MAIS termo 
     {
         pilhaTipos = comparaTipos(vazio, pilhaTipos);
+        geraCodigo(NULL, "SOMA");
     } |
     expr MENOS termo 
     {
         pilhaTipos = comparaTipos(vazio, pilhaTipos);
+        geraCodigo(NULL, "SUBT");
     } |
     expr relacao 
     {
@@ -177,10 +229,12 @@ termo    :
     termo ASTERISCO fator 
     {
         pilhaTipos = comparaTipos(vazio, pilhaTipos);
+        geraCodigo(NULL, "MULT");
     } |
     termo DIV fator 
     {
         pilhaTipos = comparaTipos(vazio, pilhaTipos);
+        geraCodigo(NULL, "DIVI");
     } |
     fator
 ;
