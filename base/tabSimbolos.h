@@ -4,7 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "compilador.h"
+
+#define MAX_IDENT 100
 
 typedef enum Categoria {
   var_simples, param_formal, procedimento

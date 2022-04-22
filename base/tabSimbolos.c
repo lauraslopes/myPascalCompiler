@@ -52,7 +52,6 @@ Simbolo* busca(char* identificador) {
 }
 
 void retira(int n) {
-
 	Simbolo* aux = topo->anterior;
 	for (int i = 0; i < n; i++) {
 		free(topo);

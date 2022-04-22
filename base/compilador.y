@@ -8,13 +8,13 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "tabSimbolos.h"
-#include "pilha.h"
+#include "compilador.h"
 
 int num_vars;
 char l_elem[MAX_IDENT];
 char str[MAX_IDENT];
 Pilha* pilhaTipos;
+int rotulo = 0;
 
 %}
 
@@ -34,10 +34,14 @@ programa    :
     {
         geraCodigo (NULL, "INPP");
     }
-    PROGRAM IDENT ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA bloco PONTO 
+    PROGRAM IDENT lista_identificadores PONTO_E_VIRGULA bloco PONTO
     {
         geraCodigo (NULL, "PARA");
     }
+;
+
+lista_identificadores    :
+     ABRE_PARENTESES lista_idents FECHA_PARENTESES |
 ;
 
 bloco    :
@@ -47,9 +51,6 @@ bloco    :
     }
     comando_composto
 ;
-
-
-
 
 parte_declara_vars:  var
 ;
@@ -97,9 +98,9 @@ lista_idents    :
     IDENT
 ;
 
-
 comando_composto    : 
-    T_BEGIN comandos T_END
+    T_BEGIN comandos T_END |
+    T_BEGIN comandos T_END PONTO_E_VIRGULA
 ;
 
 comandos    : 
@@ -108,17 +109,34 @@ comandos    :
 ;
 
 comando    : 
+    comando_sem_rotulo
+;
+
+comando_sem_rotulo    :
     atribuicao |
+    comando_composto |
     comando_repetitivo
 ;
 
 comando_repetitivo    : 
     WHILE 
     {
-        sprintf(str, "R%d%d: NADA", );
-        geraCodigo(NULL, rotulo)
+        sprintf(str, "R%d: NADA", rotulo);
+        rotulo++;
+        geraCodigo(NULL, str);
     } 
-    ABRE_PARENTESES expr FECHA_PARENTESES DO comando
+    ABRE_PARENTESES expr FECHA_PARENTESES
+    {
+        sprintf(str, "DSVF R%d", rotulo);
+        geraCodigo(NULL, str);
+    } 
+    DO comando_composto 
+    {
+        sprintf(str, "DSVS R%d", rotulo-1); 
+        geraCodigo(NULL, str);
+        sprintf(str, "R%d: NADA", rotulo); 
+        geraCodigo(NULL, str);
+    }
 ;
 
 atribuicao    : 
@@ -142,15 +160,15 @@ atribuicao    :
 expr    : 
     expr MAIS termo 
     {
-        comparaTipos(vazio);
+        pilhaTipos = comparaTipos(vazio, pilhaTipos);
     } |
     expr MENOS termo 
     {
-        comparaTipos(vazio);
+        pilhaTipos = comparaTipos(vazio, pilhaTipos);
     } |
     expr relacao 
     {
-        comparaTipos(boolean);
+        pilhaTipos = comparaTipos(boolean, pilhaTipos);
     } |
     termo
 ;
@@ -158,11 +176,11 @@ expr    :
 termo    : 
     termo ASTERISCO fator 
     {
-        comparaTipos(vazio);
+        pilhaTipos = comparaTipos(vazio, pilhaTipos);
     } |
     termo DIV fator 
     {
-        comparaTipos(vazio);
+        pilhaTipos = comparaTipos(vazio, pilhaTipos);
     } |
     fator
 ;

@@ -40,10 +40,30 @@ void geraCodigo (char* rot, char* comando) {
   }
 }
 
-void comparaTipos(int tipoEsq, int tipoDir) {
+void comparaTiposAtribuicao(int tipoEsq, int tipoDir) {
   if (tipoEsq != tipoDir) {
     imprimeErro("Expressão entre variáveis de tipos diferentes");
   }
+}
+
+Pilha* comparaTipos(Tipo tipo, Pilha* pilhaTipos) {
+
+  int t1 = devolveValor(pilhaTipos);
+  pilhaTipos = desempilha(pilhaTipos);
+  int t2 = devolveValor(pilhaTipos);
+  pilhaTipos = desempilha(pilhaTipos);
+
+  if (t1 != t2) {
+    imprimeErro("Expressão entre variáveis de tipos diferentes");
+  }
+
+  if (tipo == vazio){
+    pilhaTipos = empilha(pilhaTipos, t1);
+  } else {
+    pilhaTipos = empilha(pilhaTipos, tipo);    
+  }
+
+  return pilhaTipos;
 }
 
 int imprimeErro ( char* erro ) {
