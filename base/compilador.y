@@ -29,6 +29,9 @@ int rotulo = 0;
 %token OR AND NOT DIV MAIS MENOS ASTERISCO BARRA NUMERO
 %token IGUAL DIFF MENOR MENOR_IGUAL MAIOR MAIOR_IGUAL
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+
 %%
 
 programa    :
@@ -46,11 +49,14 @@ lista_identificadores    :
 ;
 
 bloco    :
-    parte_declara_vars
     {
         num_vars = 0;
     }
-    comando_composto
+    parte_declara_vars comando_composto
+    {
+        sprintf(str, "DMEM %d", num_vars);
+        geraCodigo (NULL, str);
+    }
 ;
 
 parte_declara_vars:  var
@@ -58,7 +64,11 @@ parte_declara_vars:  var
 
 
 var    : 
-    { } VAR declara_vars |
+    { } VAR declara_vars
+    { 
+        sprintf(str, "AMEM %d", num_vars);
+        geraCodigo (NULL, str);
+    } |
 ;
 
 declara_vars    : 
@@ -67,13 +77,7 @@ declara_vars    :
 ;
 
 declara_var : 
-    { } lista_id_var DOIS_PONTOS tipo
-    { 
-        sprintf(str, "AMEM %d", num_vars);
-        geraCodigo (NULL, str);
-        num_vars = 0;
-    }
-    PONTO_E_VIRGULA
+    { } lista_id_var DOIS_PONTOS tipo PONTO_E_VIRGULA
 ;
 
 tipo    : 
@@ -119,6 +123,7 @@ comando_sem_rotulo    :
     atribuicao |
     comando_composto |
     comando_repetitivo |
+    comando_condicional |
     leitura |
     escrita
 ;
@@ -189,12 +194,58 @@ comando_repetitivo    :
     }
 ;
 
+comando_condicional    : 
+    IF expr 
+    {
+        sprintf(str, "DSVF R%d", rotulo);
+        geraCodigo(NULL, str);
+
+        pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
+        pilhaRotulos = empilha(pilhaRotulos, rotulo); 
+        pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
+        rotulo+=2; 
+    }
+    THEN comando_sem_rotulo cond_else
+;
+
+cond_else    :
+    {
+        int r1 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "DSVS R%d", r1); 
+        geraCodigo(NULL, str);
+    } 
+    ELSE 
+    {
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d: NADA", r0); 
+        geraCodigo(NULL, str);
+    }
+    comando_sem_rotulo
+    {
+        int r1 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d: NADA", r1); 
+        geraCodigo(NULL, str);
+    } |
+    %prec LOWER_THAN_ELSE
+    {
+        pilhaRotulos = desempilha(pilhaRotulos);
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d: NADA", r0);
+        geraCodigo(NULL, str);
+        pilhaRotulos = desempilha(pilhaRotulos);
+    }
+;
+
 atribuicao    : 
     IDENT 
     {
         strncpy(l_elem, token, TAM_TOKEN);
     } 
-    ATRIBUICAO expr PONTO_E_VIRGULA 
+    ATRIBUICAO expr
     {
         Simbolo* simbolo = busca(l_elem);
         sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
