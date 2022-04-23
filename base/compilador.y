@@ -20,6 +20,7 @@ Pilha* pilhaNumParams;
 Categoria categoriaVar;
 Passagem passagemVar;
 int rotulo = 0;
+int indexParam = 0;
 
 %}
 
@@ -95,10 +96,7 @@ declara_procedimento    :
         geraCodigo(NULL, str);
         rotulo+=2;
     }
-    parametros_formais PONTO_E_VIRGULA
-    { 
-        
-    } bloco
+    parametros_formais PONTO_E_VIRGULA bloco
 ;
 
 parametros_formais    :
@@ -116,11 +114,11 @@ lista_parametros    :
 ;
 
 parametro    :
+    VAR
     {
         categoriaVar = param_formal;
         passagemVar = referencia;
-    }
-    VAR declara_param |
+    } declara_param |
     {
         categoriaVar = param_formal;
         passagemVar = porValor;
@@ -138,6 +136,7 @@ var    :
     VAR 
     {
         categoriaVar = var_simples;
+        passagemVar = porValor;
     }
     declara_vars
     { 
@@ -218,8 +217,13 @@ comando_sem_rotulo    :
 ;
 
 chamada_procedimento    :
-    ABRE_PARENTESES lista_expr FECHA_PARENTESES
+    ABRE_PARENTESES
     {
+        indexParam = 0;
+    } 
+    lista_expr FECHA_PARENTESES
+    {
+
         Simbolo* simbolo = busca(l_elem);
         sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
         geraCodigo(NULL, str);
@@ -347,7 +351,11 @@ atribuicao    :
     ATRIBUICAO expr
     {
         Simbolo* simbolo = busca(l_elem);
-        sprintf(str, "ARMZ %d,%d", simbolo->nivel, simbolo->deslocamento);
+        if (simbolo->passagem == porValor) {
+            sprintf(str, "ARMZ %d,%d", simbolo->nivel, simbolo->deslocamento);
+        } else {
+            sprintf(str, "ARMI %d,%d", simbolo->nivel, simbolo->deslocamento);
+        }
 
         int t1 = devolveValor(pilhaTipos);
         pilhaTipos = desempilha(pilhaTipos);
@@ -358,8 +366,14 @@ atribuicao    :
 ;
 
 lista_expr    :
-    lista_expr VIRGULA expr |
+    lista_expr VIRGULA expr
+    {
+        indexParam++;
+    } |
     expr
+    {
+        indexParam++;
+    }
 ;
 
 expr    : 
@@ -398,7 +412,26 @@ fator    :
     IDENT 
     {
         Simbolo* simbolo = busca(token);
-        sprintf(str, "CRVL %d,%d", simbolo->nivel, simbolo->deslocamento);
+        if (simbolo->passagem == referencia) {
+            sprintf(str, "CRVI %d,%d", simbolo->nivel, simbolo->deslocamento);
+        } else {
+            sprintf(str, "CRVL %d,%d", simbolo->nivel, simbolo->deslocamento);
+        }
+
+        if (strcmp(l_elem, "") != 0) {
+            Simbolo* proc = busca(l_elem);
+            if ((proc->categoria == procedimento) && (proc->numParams > 0) && (indexParam < proc->numParams)) {
+                printf("INDEX %d, PROCEDIMENTO %s, PASSAGEM PROC %d, PASSAGEM SIMB %d\n", indexParam, proc->identificador, proc->parametros[indexParam].passagem,simbolo->passagem);
+                if (proc->parametros[indexParam].passagem == referencia) {
+                    if (simbolo->passagem == referencia) {
+                        sprintf(str, "CRVL %d,%d", simbolo->nivel, simbolo->deslocamento);
+                    } else {
+                        sprintf(str, "CREN %d,%d", simbolo->nivel, simbolo->deslocamento);
+                    }
+                }
+            }
+        }
+        
         pilhaTipos = empilha(pilhaTipos, simbolo->tipo);
         geraCodigo(NULL, str);
     } | 

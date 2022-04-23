@@ -8,6 +8,8 @@ void printSimbolo(Simbolo* simbolo) {
 	printf("%s ", simbolo->identificador);
 	printf("%d ", simbolo->tipo);
 	printf("%d ", simbolo->nivel);
+	printf("%d ", simbolo->passagem);
+	printf("%d ", simbolo->numParams);
 	printf("%d\n", simbolo->deslocamento);
 }
 
@@ -26,13 +28,14 @@ void insere(char* identificador, Categoria categoria, Passagem passagem) {
 	simbolo->categoria = categoria;
 	simbolo->nivel = nivel_lexico;
 	simbolo->tipo = vazio;
+	simbolo->passagem = passagem;
+	simbolo->numParams = 0;
 
 	if (categoria == var_simples) {
 		simbolo->deslocamento = desloc;
 		desloc++;
 	} else {
 		simbolo->deslocamento = -1;
-		simbolo->passagem = passagem;
 	}
 
 	if (topo != NULL) {
@@ -115,12 +118,13 @@ void atualizaProcedimento(int numParams) {
 
 	ParamFormal* parametros = malloc(numParams*sizeof(ParamFormal));
 	Simbolo* aux = topo;
-	for (int i = 0; i < numParams; i++) {
+	for (int i = numParams-1; i >= 0; i--) {
 		parametros[i].tipo = aux->tipo;
 		parametros[i].passagem = aux->passagem;
 		aux = aux->anterior;
 	}
 
+	printf("PROCEDIMENTO %s %d\n", aux->identificador, numParams);
 	aux->numParams = numParams;
 	aux->parametros = parametros;
 }
