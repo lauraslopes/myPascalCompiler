@@ -23,13 +23,18 @@ typedef struct Simbolo {
 	int nivel;
 	Tipo tipo;
 	int deslocamento;
-	
+
+	/*Procedimento e função*/
+	int rotulo;
+	int numParams;
+
 	struct Simbolo* anterior;
 } Simbolo;
 
 extern int nivel_lexico;
 
 void insere(char* identificador, Categoria categoria);
+void insereComRotulo(char* identificador, int rotulo, int numParams, Categoria categoria);
 Simbolo* busca(char* identificador);
 void retira(int n);
 void atualizaTipo(char* tipoStr);

@@ -15,6 +15,7 @@ char l_elem[MAX_IDENT];
 char str[MAX_IDENT];
 Pilha* pilhaTipos;
 Pilha* pilhaRotulos;
+Pilha* pilhaNumVars;
 int rotulo = 0;
 
 %}
@@ -45,27 +46,63 @@ programa    :
 ;
 
 lista_identificadores    :
-     ABRE_PARENTESES lista_idents FECHA_PARENTESES |
+    ABRE_PARENTESES lista_idents FECHA_PARENTESES |
 ;
 
 bloco    :
     {
         num_vars = 0;
+        desloc = 0;
     }
-    parte_declara_vars comando_composto
+    parte_declara_vars
+    parte_declara_subrotinas comando_composto
     {
-        sprintf(str, "DMEM %d", num_vars);
+        int nVars = devolveValor(pilhaNumVars);
+        pilhaNumVars = desempilha(pilhaNumVars);
+        sprintf(str, "DMEM %d", nVars);
         geraCodigo (NULL, str);
     }
+;
+
+parte_declara_subrotinas    :
+    declara_procedimento
+    {
+        sprintf(str, "RTPR %d,%d", nivel_lexico, 0);
+        geraCodigo (NULL, str);
+
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d: NADA", r0);
+        geraCodigo (NULL, str);
+        nivel_lexico--;
+    } |
+;
+
+declara_procedimento    :
+    PROCEDURE IDENT 
+    {
+        strncpy(l_elem, token, TAM_TOKEN);
+    }
+    PONTO_E_VIRGULA
+    { 
+        nivel_lexico++;
+        sprintf(str, "DSVS R%d", rotulo); 
+        pilhaRotulos = empilha(pilhaRotulos, rotulo);
+        geraCodigo(NULL, str);
+        sprintf(str, "R%d: ENPR %d", rotulo+1, nivel_lexico);
+        insereComRotulo(l_elem, rotulo+1, 0, procedimento); 
+        geraCodigo(NULL, str);
+        rotulo+=2;
+    } bloco
 ;
 
 parte_declara_vars:  var
 ;
 
-
 var    : 
     { } VAR declara_vars
     { 
+        pilhaNumVars = empilha(pilhaNumVars, num_vars);
         sprintf(str, "AMEM %d", num_vars);
         geraCodigo (NULL, str);
     } |
@@ -119,13 +156,40 @@ comando    :
     comando_sem_rotulo
 ;
 
-comando_sem_rotulo    :
+a    :
+    IDENT 
+    {
+        strncpy(l_elem, token, TAM_TOKEN);
+    } 
+    a_continua
+;
+
+a_continua    :
     atribuicao |
+    chamada_procedimento
+;
+
+comando_sem_rotulo    :
+    a |
     comando_composto |
     comando_repetitivo |
     comando_condicional |
     leitura |
-    escrita
+    escrita 
+;
+
+chamada_procedimento    :
+    {
+        Simbolo* simbolo = busca(l_elem);
+        sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
+        geraCodigo(NULL, str);
+    }
+    ABRE_PARENTESES lista_expr FECHA_PARENTESES | 
+    {
+        Simbolo* simbolo = busca(l_elem);
+        sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
+        geraCodigo(NULL, str);
+    } 
 ;
 
 leitura    :
@@ -137,14 +201,14 @@ leitura_identificadores    :
     {
         geraCodigo(NULL, "LEIT");
         Simbolo* simbolo = busca(token);
-        sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
+        sprintf(str, "ARMZ %d,%d", simbolo->nivel, simbolo->deslocamento);
         geraCodigo(NULL, str);
     } |
     IDENT 
     {
         geraCodigo(NULL, "LEIT");
         Simbolo* simbolo = busca(token);
-        sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
+        sprintf(str, "ARMZ %d,%d", simbolo->nivel, simbolo->deslocamento);
         geraCodigo(NULL, str);
     }
 ;
@@ -241,14 +305,10 @@ cond_else    :
 ;
 
 atribuicao    : 
-    IDENT 
-    {
-        strncpy(l_elem, token, TAM_TOKEN);
-    } 
     ATRIBUICAO expr
     {
         Simbolo* simbolo = busca(l_elem);
-        sprintf(str, "ARMZ %d,%d", nivel_lexico, simbolo->deslocamento);
+        sprintf(str, "ARMZ %d,%d", simbolo->nivel, simbolo->deslocamento);
 
         int t1 = devolveValor(pilhaTipos);
         pilhaTipos = desempilha(pilhaTipos);
@@ -256,6 +316,11 @@ atribuicao    :
 
         geraCodigo(NULL, str);
     }
+;
+
+lista_expr    :
+    lista_expr VIRGULA expr |
+    expr
 ;
 
 expr    : 
@@ -294,7 +359,7 @@ fator    :
     IDENT 
     {
         Simbolo* simbolo = busca(token);
-        sprintf(str, "CRVL %d,%d", nivel_lexico, simbolo->deslocamento);
+        sprintf(str, "CRVL %d,%d", simbolo->nivel, simbolo->deslocamento);
         pilhaTipos = empilha(pilhaTipos, simbolo->tipo);
         geraCodigo(NULL, str);
     } | 

@@ -36,6 +36,22 @@ void insere(char* identificador, Categoria categoria) {
 	desloc++;
 }
 
+void insereComRotulo(char* identificador, int rotulo, int numParams, Categoria categoria) {
+
+	Simbolo* simbolo = malloc(sizeof(Simbolo));
+	strncpy(simbolo->identificador, identificador, MAX_IDENT);
+	simbolo->categoria = categoria;
+	simbolo->nivel = nivel_lexico;
+	simbolo->rotulo = rotulo;
+	simbolo->numParams = numParams;
+
+	if (topo != NULL) {
+		simbolo->anterior = topo;
+	}
+
+	topo = simbolo;
+}
+
 Simbolo* busca(char* identificador) {
 
 	Simbolo* atual = topo;
