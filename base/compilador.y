@@ -16,6 +16,9 @@ char str[MAX_IDENT];
 Pilha* pilhaTipos;
 Pilha* pilhaRotulos;
 Pilha* pilhaNumVars;
+Pilha* pilhaNumParams;
+Categoria categoriaVar;
+Passagem passagemVar;
 int rotulo = 0;
 
 %}
@@ -67,7 +70,9 @@ bloco    :
 parte_declara_subrotinas    :
     declara_procedimento
     {
-        sprintf(str, "RTPR %d,%d", nivel_lexico, 0);
+        int numParams = devolveValor(pilhaNumParams);
+        pilhaNumParams = desempilha(pilhaNumParams);
+        sprintf(str, "RTPR %d,%d", nivel_lexico, numParams);
         geraCodigo (NULL, str);
 
         int r0 = devolveValor(pilhaRotulos);
@@ -81,31 +86,65 @@ parte_declara_subrotinas    :
 declara_procedimento    :
     PROCEDURE IDENT 
     {
-        strncpy(l_elem, token, TAM_TOKEN);
-    }
-    PONTO_E_VIRGULA
-    { 
         nivel_lexico++;
         sprintf(str, "DSVS R%d", rotulo); 
         pilhaRotulos = empilha(pilhaRotulos, rotulo);
         geraCodigo(NULL, str);
         sprintf(str, "R%d: ENPR %d", rotulo+1, nivel_lexico);
-        insereComRotulo(l_elem, rotulo+1, 0, procedimento); 
+        insereComRotulo(token, rotulo+1, procedimento); 
         geraCodigo(NULL, str);
         rotulo+=2;
+    }
+    parametros_formais PONTO_E_VIRGULA
+    { 
+        
     } bloco
 ;
+
+parametros_formais    :
+    ABRE_PARENTESES lista_parametros FECHA_PARENTESES
+    {
+        int numParams = atualizaDeslocamento();
+        pilhaNumParams = empilha(pilhaNumParams, numParams);
+        atualizaProcedimento(numParams);
+    } |
+;
+
+lista_parametros    :
+    lista_parametros PONTO_E_VIRGULA parametro |
+    parametro
+;
+
+parametro    :
+    {
+        categoriaVar = param_formal;
+        passagemVar = referencia;
+    }
+    VAR declara_param |
+    {
+        categoriaVar = param_formal;
+        passagemVar = porValor;
+    }
+    declara_param
+;
+
+declara_param    :
+    lista_id_var DOIS_PONTOS tipo
 
 parte_declara_vars:  var
 ;
 
 var    : 
-    { } VAR declara_vars
+    VAR 
+    {
+        categoriaVar = var_simples;
+    }
+    declara_vars
     { 
         pilhaNumVars = empilha(pilhaNumVars, num_vars);
         sprintf(str, "AMEM %d", num_vars);
         geraCodigo (NULL, str);
-    } |
+    }
 ;
 
 declara_vars    : 
@@ -114,7 +153,7 @@ declara_vars    :
 ;
 
 declara_var : 
-    { } lista_id_var DOIS_PONTOS tipo PONTO_E_VIRGULA
+    lista_id_var DOIS_PONTOS tipo PONTO_E_VIRGULA
 ;
 
 tipo    : 
@@ -127,11 +166,11 @@ tipo    :
 lista_id_var    : 
     lista_id_var VIRGULA IDENT
     {
-        insere(token, var_simples); num_vars++;/* insere ultima vars na tabela de simbolos */ 
+        insere(token, categoriaVar, passagemVar); num_vars++;/* insere ultima vars na tabela de simbolos */ 
     } | 
     IDENT 
     { 
-        insere(token, var_simples); num_vars++; /* insere vars na tabela de simbolos */
+        insere(token, categoriaVar, passagemVar); num_vars++; /* insere vars na tabela de simbolos */
     }
 ;
 
@@ -179,12 +218,12 @@ comando_sem_rotulo    :
 ;
 
 chamada_procedimento    :
+    ABRE_PARENTESES lista_expr FECHA_PARENTESES
     {
         Simbolo* simbolo = busca(l_elem);
         sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
         geraCodigo(NULL, str);
-    }
-    ABRE_PARENTESES lista_expr FECHA_PARENTESES | 
+    } | 
     {
         Simbolo* simbolo = busca(l_elem);
         sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
@@ -261,12 +300,12 @@ comando_repetitivo    :
 comando_condicional    : 
     IF expr 
     {
-        sprintf(str, "DSVF R%d", rotulo);
+        sprintf(str, "DSVF R%d", rotulo+1);
         geraCodigo(NULL, str);
 
-        pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
         pilhaRotulos = empilha(pilhaRotulos, rotulo); 
         pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
+        pilhaRotulos = empilha(pilhaRotulos, rotulo);
         rotulo+=2; 
     }
     THEN comando_sem_rotulo cond_else
@@ -274,31 +313,31 @@ comando_condicional    :
 
 cond_else    :
     {
-        int r1 = devolveValor(pilhaRotulos);
+        int r0 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "DSVS R%d", r1); 
+        sprintf(str, "DSVS R%d", r0); 
         geraCodigo(NULL, str);
     } 
     ELSE 
-    {
-        int r0 = devolveValor(pilhaRotulos);
-        pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "R%d: NADA", r0); 
-        geraCodigo(NULL, str);
-    }
-    comando_sem_rotulo
     {
         int r1 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
         sprintf(str, "R%d: NADA", r1); 
         geraCodigo(NULL, str);
+    }
+    comando_sem_rotulo
+    {
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d: NADA", r0); 
+        geraCodigo(NULL, str);
     } |
     %prec LOWER_THAN_ELSE
     {
         pilhaRotulos = desempilha(pilhaRotulos);
-        int r0 = devolveValor(pilhaRotulos);
+        int r1 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "R%d: NADA", r0);
+        sprintf(str, "R%d: NADA", r1);
         geraCodigo(NULL, str);
         pilhaRotulos = desempilha(pilhaRotulos);
     }

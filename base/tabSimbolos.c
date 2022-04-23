@@ -19,31 +19,38 @@ void printTabSimbolo() {
 	}
 }
 
-void insere(char* identificador, Categoria categoria) {
+void insere(char* identificador, Categoria categoria, Passagem passagem) {
 
 	Simbolo* simbolo = malloc(sizeof(Simbolo));
 	strncpy(simbolo->identificador, identificador, MAX_IDENT);
 	simbolo->categoria = categoria;
 	simbolo->nivel = nivel_lexico;
 	simbolo->tipo = vazio;
-	simbolo->deslocamento = desloc;
+
+	if (categoria == var_simples) {
+		simbolo->deslocamento = desloc;
+		desloc++;
+	} else {
+		simbolo->deslocamento = -1;
+		simbolo->passagem = passagem;
+	}
 
 	if (topo != NULL) {
 		simbolo->anterior = topo;
 	}
 
 	topo = simbolo;
-	desloc++;
 }
 
-void insereComRotulo(char* identificador, int rotulo, int numParams, Categoria categoria) {
+void insereComRotulo(char* identificador, int rotulo, Categoria categoria) {
 
 	Simbolo* simbolo = malloc(sizeof(Simbolo));
 	strncpy(simbolo->identificador, identificador, MAX_IDENT);
 	simbolo->categoria = categoria;
 	simbolo->nivel = nivel_lexico;
 	simbolo->rotulo = rotulo;
-	simbolo->numParams = numParams;
+	simbolo->numParams = 0;
+	simbolo->deslocamento = -2;
 
 	if (topo != NULL) {
 		simbolo->anterior = topo;
@@ -87,4 +94,33 @@ void atualizaTipo(char* tipoStr) {
 		aux->tipo = integer;
 		aux = aux->anterior;
 	}
+}
+
+int atualizaDeslocamento() {
+
+	int numParams = 0;
+	int deslocamento = -4;
+	Simbolo* aux = topo;
+	while ((aux != NULL) && (aux->deslocamento == -1)) {
+		aux->deslocamento = deslocamento;
+		deslocamento--;
+		numParams++;
+		aux = aux->anterior;
+	}
+
+	return numParams;
+}
+
+void atualizaProcedimento(int numParams) {
+
+	ParamFormal* parametros = malloc(numParams*sizeof(ParamFormal));
+	Simbolo* aux = topo;
+	for (int i = 0; i < numParams; i++) {
+		parametros[i].tipo = aux->tipo;
+		parametros[i].passagem = aux->passagem;
+		aux = aux->anterior;
+	}
+
+	aux->numParams = numParams;
+	aux->parametros = parametros;
 }
