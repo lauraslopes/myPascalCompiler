@@ -28,4 +28,4 @@ pilha.o : pilha.h pilha.c
 	gcc -c pilha.c -o pilha.o
 
 clean :
-	rm -f compilador.tab.* lex.yy.c compilador.o compilador
+	rm -f compilador.tab.* lex.yy.c compilador.o compilador pilha.o tabSimbolos.o
