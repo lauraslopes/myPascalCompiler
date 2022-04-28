@@ -12,7 +12,7 @@ typedef enum Passagem {
 } Passagem;
 
 typedef enum Categoria {
-  var_simples, param_formal, procedimento
+  var_simples, param_formal, procedimento, funcao
 } Categoria;
 
 typedef enum Tipo {
@@ -49,6 +49,7 @@ void insereComRotulo(char* identificador, int rotulo, Categoria categoria);
 Simbolo* busca(char* identificador);
 void retira(int n);
 void atualizaTipo(char* tipoStr);
+void atualizaTipoFuncao(Simbolo* funcao, char* tipoFuncao);
 void printTabSimbolo();
 int atualizaDeslocamento();
 void atualizaProcedimento(int numParams);

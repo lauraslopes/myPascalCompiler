@@ -78,11 +78,14 @@ Simbolo* busca(char* identificador) {
 }
 
 void retira(int n) {
-	Simbolo* aux = topo->anterior;
-	for (int i = 0; i < n; i++) {
-		free(topo);
-		topo = aux;
-		aux = aux->anterior;
+	Simbolo* aux;
+	for (int i = 0; (i < n) && (topo != NULL); i++) {
+		aux = topo;
+		if (topo != NULL) {
+			topo = topo->anterior;
+		}
+
+		free(aux);
 	}
 }
 
@@ -99,6 +102,15 @@ void atualizaTipo(char* tipoStr) {
 	}
 }
 
+void atualizaTipoFuncao(Simbolo* funcao, char* tipoFuncao) {
+
+	if (strcmp(tipoFuncao, "integer") != 0) {
+		imprimeErro("Tipo inválido");
+	}
+
+	funcao->tipo = integer;
+}
+
 int atualizaDeslocamento() {
 
 	int numParams = 0;
@@ -109,6 +121,10 @@ int atualizaDeslocamento() {
 		deslocamento--;
 		numParams++;
 		aux = aux->anterior;
+	}
+
+	if (aux->categoria == funcao) {
+		aux->deslocamento = deslocamento;
 	}
 
 	return numParams;
@@ -124,7 +140,6 @@ void atualizaProcedimento(int numParams) {
 		aux = aux->anterior;
 	}
 
-	printf("PROCEDIMENTO %s %d\n", aux->identificador, numParams);
 	aux->numParams = numParams;
 	aux->parametros = parametros;
 }

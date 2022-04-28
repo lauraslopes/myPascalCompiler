@@ -1,7 +1,5 @@
-
-// Testar se funciona corretamente o empilhamento de par�metros
-// passados por valor ou por refer�ncia.
-
+// 2) Retirar da tabela de simbolos os parametros empilhados na chamada
+// de função e procedimento
 
 %{
 #include <stdio.h>
@@ -12,6 +10,8 @@
 
 int num_vars;
 char l_elem[MAX_IDENT];
+char idFuncao[MAX_IDENT];
+char aux[MAX_IDENT];
 char str[MAX_IDENT];
 Pilha* pilhaTipos;
 Pilha* pilhaRotulos;
@@ -58,17 +58,35 @@ bloco    :
         num_vars = 0;
         desloc = 0;
     }
-    parte_declara_vars
-    parte_declara_subrotinas comando_composto
+    parte_declara_vars parte_declara_subrotinas comando_composto
     {
         int nVars = devolveValor(pilhaNumVars);
         pilhaNumVars = desempilha(pilhaNumVars);
         sprintf(str, "DMEM %d", nVars);
         geraCodigo (NULL, str);
+
+        //remove da tabela de simbolos variáveis
+        retira(nVars);
     }
 ;
 
 parte_declara_subrotinas    :
+    parte_declara_subrotinas declara_procedimento
+    {
+        int numParams = devolveValor(pilhaNumParams);
+        pilhaNumParams = desempilha(pilhaNumParams);
+        sprintf(str, "RTPR %d,%d", nivel_lexico, numParams);
+        geraCodigo (NULL, str);
+
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d", r0);
+        geraCodigo (str, "NADA");
+        nivel_lexico--;
+
+        //remove da tabela de simbolos
+        retira(numParams);
+    } |
     declara_procedimento
     {
         int numParams = devolveValor(pilhaNumParams);
@@ -78,10 +96,70 @@ parte_declara_subrotinas    :
 
         int r0 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "R%d: NADA", r0);
-        geraCodigo (NULL, str);
+        sprintf(str, "R%d", r0);
+        geraCodigo (str, "NADA");
         nivel_lexico--;
+
+        //remove da tabela de simbolos
+        retira(numParams);
     } |
+    parte_declara_subrotinas declara_funcao
+    {
+        int numParams = devolveValor(pilhaNumParams);
+        pilhaNumParams = desempilha(pilhaNumParams);
+        sprintf(str, "RTPR %d,%d", nivel_lexico, numParams);
+        geraCodigo (NULL, str);
+
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d", r0);
+        geraCodigo (str, "NADA");
+        nivel_lexico--;
+
+        //remove da tabela de simbolos
+        retira(numParams);
+    } |
+    declara_funcao
+    {
+        int numParams = devolveValor(pilhaNumParams);
+        pilhaNumParams = desempilha(pilhaNumParams);
+        sprintf(str, "RTPR %d,%d", nivel_lexico, numParams);
+        geraCodigo (NULL, str);
+
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "R%d", r0);
+        geraCodigo (str, "NADA");
+        nivel_lexico--;
+
+        //remove da tabela de simbolos
+        retira(numParams);
+    } |
+;
+
+declara_funcao    :
+    FUNCTION IDENT 
+    {
+        nivel_lexico++;
+        sprintf(str, "DSVS R%d", rotulo); 
+        pilhaRotulos = empilha(pilhaRotulos, rotulo);
+        geraCodigo(NULL, str);
+
+        char strRot[MAX_IDENT]; 
+        sprintf(strRot, "R%d", rotulo+1);
+        sprintf(str, "ENPR %d", nivel_lexico);
+        insereComRotulo(token, rotulo+1, funcao); 
+        geraCodigo(strRot, str);
+        rotulo+=2;
+
+        strncpy(idFuncao, token, TAM_TOKEN);
+    }
+    parametros_formais DOIS_PONTOS IDENT 
+    {
+        Simbolo* simbolo = busca(idFuncao);
+        atualizaTipoFuncao(simbolo, token);
+    } 
+    PONTO_E_VIRGULA bloco
 ;
 
 declara_procedimento    :
@@ -91,9 +169,12 @@ declara_procedimento    :
         sprintf(str, "DSVS R%d", rotulo); 
         pilhaRotulos = empilha(pilhaRotulos, rotulo);
         geraCodigo(NULL, str);
-        sprintf(str, "R%d: ENPR %d", rotulo+1, nivel_lexico);
+
+        char strRot[MAX_IDENT]; 
+        sprintf(strRot, "R%d", rotulo+1);
+        sprintf(str, "ENPR %d", nivel_lexico);
         insereComRotulo(token, rotulo+1, procedimento); 
-        geraCodigo(NULL, str);
+        geraCodigo(strRot, str);
         rotulo+=2;
     }
     parametros_formais PONTO_E_VIRGULA bloco
@@ -128,6 +209,7 @@ parametro    :
 
 declara_param    :
     lista_id_var DOIS_PONTOS tipo
+;
 
 parte_declara_vars:  var
 ;
@@ -194,21 +276,21 @@ comando    :
     comando_sem_rotulo
 ;
 
-a    :
+identificador    :
     IDENT 
     {
         strncpy(l_elem, token, TAM_TOKEN);
     } 
-    a_continua
+    identificador_continua
 ;
 
-a_continua    :
+identificador_continua    :
     atribuicao |
     chamada_procedimento
 ;
 
 comando_sem_rotulo    :
-    a |
+    identificador |
     comando_composto |
     comando_repetitivo |
     comando_condicional |
@@ -223,16 +305,41 @@ chamada_procedimento    :
     } 
     lista_expr FECHA_PARENTESES
     {
-
         Simbolo* simbolo = busca(l_elem);
         sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
         geraCodigo(NULL, str);
+        strncpy(idFuncao, l_elem, TAM_TOKEN);
     } | 
     {
         Simbolo* simbolo = busca(l_elem);
         sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
         geraCodigo(NULL, str);
+        strncpy(idFuncao, l_elem, TAM_TOKEN);
     } 
+;
+
+chamada_funcao    :
+    {
+        geraCodigo(NULL, "AMEM 1");
+    }
+    chamada_funcao_continua
+;
+
+chamada_funcao_continua    :
+    ABRE_PARENTESES
+    {
+        indexParam = 0;
+        Simbolo* simbolo = busca(aux);
+        if (simbolo->categoria == funcao) {
+            strncpy(idFuncao, aux, TAM_TOKEN);
+        }
+    } 
+    lista_expr FECHA_PARENTESES
+    {
+        Simbolo* simbolo = busca(idFuncao);
+        sprintf(str, "CHPR R%d,%d", simbolo->rotulo, nivel_lexico);
+        geraCodigo(NULL, str);
+    }
 ;
 
 leitura    :
@@ -275,12 +382,12 @@ escrita_identificadores    :
 comando_repetitivo    : 
     WHILE 
     {
-        sprintf(str, "R%d: NADA", rotulo);
+        sprintf(str, "R%d", rotulo);
 
         pilhaRotulos = empilha(pilhaRotulos, rotulo);
         pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
         rotulo+=2;
-        geraCodigo(NULL, str);
+        geraCodigo(str, "NADA");
     } 
     ABRE_PARENTESES expr FECHA_PARENTESES
     {
@@ -296,8 +403,34 @@ comando_repetitivo    :
         pilhaRotulos = desempilha(pilhaRotulos);
         sprintf(str, "DSVS R%d", r0); 
         geraCodigo(NULL, str);
-        sprintf(str, "R%d: NADA", r1); 
+        sprintf(str, "R%d", r1); 
+        geraCodigo(str, "NADA");
+    } |
+    WHILE 
+    {
+        sprintf(str, "R%d", rotulo);
+
+        pilhaRotulos = empilha(pilhaRotulos, rotulo);
+        pilhaRotulos = empilha(pilhaRotulos, rotulo+1);
+        rotulo+=2;
+        geraCodigo(str, "NADA");
+    } 
+    expr
+    {
+        int r1 = devolveValor(pilhaRotulos);
+        sprintf(str, "DSVF R%d", r1);
         geraCodigo(NULL, str);
+    } 
+    DO comando_sem_rotulo 
+    {
+        int r1 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        int r0 = devolveValor(pilhaRotulos);
+        pilhaRotulos = desempilha(pilhaRotulos);
+        sprintf(str, "DSVS R%d", r0); 
+        geraCodigo(NULL, str);
+        sprintf(str, "R%d", r1); 
+        geraCodigo(str, "NADA");
     }
 ;
 
@@ -326,23 +459,23 @@ cond_else    :
     {
         int r1 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "R%d: NADA", r1); 
-        geraCodigo(NULL, str);
+        sprintf(str, "R%d", r1); 
+        geraCodigo(str, "NADA");
     }
     comando_sem_rotulo
     {
         int r0 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "R%d: NADA", r0); 
-        geraCodigo(NULL, str);
+        sprintf(str, "R%d", r0); 
+        geraCodigo(str, "NADA");
     } |
     %prec LOWER_THAN_ELSE
     {
         pilhaRotulos = desempilha(pilhaRotulos);
         int r1 = devolveValor(pilhaRotulos);
         pilhaRotulos = desempilha(pilhaRotulos);
-        sprintf(str, "R%d: NADA", r1);
-        geraCodigo(NULL, str);
+        sprintf(str, "R%d", r1);
+        geraCodigo(str, "NADA");
         pilhaRotulos = desempilha(pilhaRotulos);
     }
 ;
@@ -391,7 +524,7 @@ expr    :
     {
         pilhaTipos = comparaTipos(boolean, pilhaTipos);
     } |
-    termo
+    termo 
 ;
 
 termo    : 
@@ -408,20 +541,28 @@ termo    :
     fator
 ;
 
-fator    : 
+fator_identificador    :
     IDENT 
     {
-        Simbolo* simbolo = busca(token);
+        strncpy(aux, token, TAM_TOKEN);
+    } 
+    fator_identificador_continua
+;
+
+fator_identificador_continua    :
+    chamada_funcao |
+    {
+        Simbolo* simbolo = busca(aux);
+
         if (simbolo->passagem == referencia) {
             sprintf(str, "CRVI %d,%d", simbolo->nivel, simbolo->deslocamento);
         } else {
             sprintf(str, "CRVL %d,%d", simbolo->nivel, simbolo->deslocamento);
         }
 
-        if (strcmp(l_elem, "") != 0) {
-            Simbolo* proc = busca(l_elem);
-            if ((proc->categoria == procedimento) && (proc->numParams > 0) && (indexParam < proc->numParams)) {
-                printf("INDEX %d, PROCEDIMENTO %s, PASSAGEM PROC %d, PASSAGEM SIMB %d\n", indexParam, proc->identificador, proc->parametros[indexParam].passagem,simbolo->passagem);
+        if (strcmp(idFuncao, "") != 0) {
+            Simbolo* proc = busca(idFuncao);
+            if (((proc->categoria == procedimento) || (proc->categoria == funcao)) && (proc->numParams > 0) && (indexParam < proc->numParams)) {
                 if (proc->parametros[indexParam].passagem == referencia) {
                     if (simbolo->passagem == referencia) {
                         sprintf(str, "CRVL %d,%d", simbolo->nivel, simbolo->deslocamento);
@@ -431,10 +572,13 @@ fator    :
                 }
             }
         }
-        
+           
         pilhaTipos = empilha(pilhaTipos, simbolo->tipo);
         geraCodigo(NULL, str);
-    } | 
+    }
+
+fator    : 
+    fator_identificador | 
     NUMERO
     {
         sprintf(str, "CRCT %s", token);

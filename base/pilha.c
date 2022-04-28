@@ -33,7 +33,10 @@ int devolveValor(Pilha *p) {
 
 Pilha* desempilha(Pilha *p) {
 
-	Pilha* aux = p->anterior;
+	Pilha* aux = NULL;
+	if (p != NULL) {
+		aux = p->anterior;
+	}
 	free(p);
 
 	return aux;
